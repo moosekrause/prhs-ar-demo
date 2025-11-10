@@ -11,36 +11,32 @@
 
   <style>
     html, body { margin:0; height:100%; background:#0f2446; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    .hud {
-      position: fixed; left: 0; right: 0; bottom: 12px;
-      display:flex; gap:10px; justify-content:center; z-index: 3;
-    }
-    .btn {
-      background:#ffffff; border-radius:999px; padding:10px 14px; font-weight:600; border:none;
-      box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer;
-    }
-    .donate-wrap {
-      position: fixed; right: 12px; top: 12px; z-index: 3; text-align:center;
-    }
+    .hud { position: fixed; left: 0; right: 0; bottom: 12px; display:flex; gap:10px; justify-content:center; z-index: 3; }
+    .btn { background:#ffffff; border-radius:999px; padding:10px 14px; font-weight:600; border:none; box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer; }
+    .donate-wrap { position: fixed; right: 12px; top: 12px; z-index: 3; text-align:center; }
     .donate-wrap a { text-decoration:none; display:inline-block; }
     .donate-wrap img { width:110px; height:auto; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.28); }
-    .hint {
-      position: fixed; left:0; right:0; top: 10px; text-align:center; color:#fff; z-index:2; font-weight:600;
-      text-shadow:0 1px 2px rgba(0,0,0,.5);
+    #unmute { position: fixed; left: 12px; top: 12px; z-index: 3; background:#ffffff; color:#0f2446; border:none; border-radius:999px; font-weight:600; padding:10px 14px; box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer; }
+    video { display:none; } /* A-Frame uses it as a texture */
+    /* Start overlay */
+    .gate {
+      position: fixed; inset: 0; background: radial-gradient(120% 120% at 50% 40%, #1b3a7a 0%, #0f2446 60%, #0b1630 100%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index: 10; color:#fff; text-align:center; padding:24px;
     }
-    #unmute {
-      position: fixed; left: 12px; top: 12px; z-index: 3;
-      background:#ffffff; color:#0f2446; border:none; border-radius:999px;
-      font-weight:600; padding:10px 14px; box-shadow:0 4px 14px rgba(0,0,0,.18);
-      cursor:pointer;
+    .gate h1 { margin:0; font-size:22px; }
+    .gate p { margin:0; opacity:.9 }
+    .gate button {
+      margin-top:8px; background:#ffffff; color:#0f2446; border:none; padding:12px 18px; border-radius:999px; font-weight:700; cursor:pointer;
+      box-shadow:0 8px 24px rgba(0,0,0,.25);
     }
-    video { display:none; }
+    .hint { position: fixed; left:0; right:0; top: 10px; text-align:center; color:#fff; z-index:2; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,.5); }
   </style>
 </head>
 
 <body>
   <!-- DONATE overlay -->
   <div class="donate-wrap">
+    <!-- TODO: replace # with your donation URL -->
     <a href="#" target="_blank" rel="noopener">
       <img src="assets/Donate Walking Tour.png" alt="Donate to Park Ridge Historical Society">
     </a>
@@ -49,7 +45,7 @@
   <!-- UNMUTE button -->
   <button id="unmute">🔇 Unmute</button>
 
-  <!-- Info hint -->
+  <!-- Instruction hint -->
   <div class="hint">Allow camera access — your AR scene will appear automatically.</div>
 
   <!-- HUD controls -->
@@ -59,23 +55,28 @@
     <button class="btn" id="rotate">Rotate 15°</button>
   </div>
 
-  <!-- Sponsor Video -->
-  <video id="sponsorVid" src="assets/Solomon Cottage.mp4" autoplay muted playsinline loop></video>
+  <!-- Start overlay (forces a user gesture for camera + video) -->
+  <div class="gate" id="gate">
+    <h1>Solomon Cottage AR</h1>
+    <p>Tap Start to enable your camera and begin the demo.</p>
+    <button id="startBtn">Start AR</button>
+  </div>
 
-  <!-- Background Audio (optional) -->
-  <!-- If you don’t have a background.mp3, you can remove this line -->
+  <!-- Media sources -->
+  <video id="sponsorVid" src="assets/Solomon Cottage.mp4" autoplay muted playsinline loop></video>
+  <!-- Optional: if you didn’t upload this, remove the element below -->
   <audio id="bgMusic" src="assets/background.mp3" loop preload="auto"></audio>
 
-  <!-- Markerless Scene -->
+  <!-- Markerless scene -->
   <a-scene
     vr-mode-ui="enabled:false"
     embedded
     renderer="antialias:true; alpha:true"
-    arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled:false;">
+    arjs="sourceType: webcam; facingMode: environment; trackingMethod: best; debugUIEnabled:false;">
     
     <a-entity light="type: ambient; intensity: 1"></a-entity>
 
-    <!-- Content appears 2 meters in front of camera -->
+    <!-- Content 2m in front of the camera -->
     <a-entity id="contentGroup" position="0 0 -2" rotation="0 0 0" scale="1 1 1">
       <!-- Historic Photo -->
       <a-plane position="-0.65 0.35 0"
@@ -91,61 +92,57 @@
       </a-video>
 
       <!-- Label -->
-      <a-plane position="0 -0.15 0"
-               width="2.3" height="0.25"
-               color="#ffffff" opacity="0.9">
-        <a-entity text="value: Park Ridge Historical Society • Solomon Cottage; color:#0f2446; align:center; width: 3.8;"
-                  position="0 0 0.01"></a-entity>
+      <a-plane position="0 -0.15 0" width="2.3" height="0.25" color="#ffffff" opacity="0.9">
+        <a-entity text="value: Park Ridge Historical Society • Solomon Cottage; color:#0f2446; align:center; width: 3.8;" position="0 0 0.01"></a-entity>
       </a-plane>
     </a-entity>
 
-    <!-- Camera -->
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
+    const gate = document.getElementById('gate');
+    const startBtn = document.getElementById('startBtn');
     const vid = document.getElementById('sponsorVid');
-    const unmuteBtn = document.getElementById('unmute');
     const bgMusic = document.getElementById('bgMusic');
-    let isMuted = true;
-    let fadeTimer;
+    const unmuteBtn = document.getElementById('unmute');
+    const group = document.getElementById('contentGroup');
+    let isMuted = true, fadeTimer;
 
-    // Autoplay handling
-    const kickVideo = () => {
-      vid.play().catch(()=>{});
-      window.removeEventListener('touchstart', kickVideo);
-      window.removeEventListener('click', kickVideo);
-    };
-    window.addEventListener('touchstart', kickVideo, {once:true});
-    window.addEventListener('click', kickVideo, {once:true});
+    // Start AR on button tap: triggers camera permission and kicks video
+    startBtn.addEventListener('click', async () => {
+      try {
+        // Kick video (required on mobile)
+        await vid.play().catch(()=>{});
+        // Hide gate
+        gate.style.display = 'none';
+      } catch(e) {
+        console.warn('Video play was blocked:', e);
+      }
+    });
 
-    // Fade-in background audio
+    // Unmute toggle + background music fade
     function fadeInAudio(audioEl, duration = 3000) {
       if (!audioEl) return;
       audioEl.volume = 0;
       audioEl.play().catch(()=>{});
       clearInterval(fadeTimer);
-      const step = 0.05;
+      const steps = 20, interval = duration / steps, delta = 1 / steps;
       fadeTimer = setInterval(() => {
-        if (audioEl.volume < 1.0) {
-          audioEl.volume = Math.min(1, audioEl.volume + step);
-        } else {
-          clearInterval(fadeTimer);
-        }
-      }, duration * step);
+        audioEl.volume = Math.min(1, audioEl.volume + delta);
+        if (audioEl.volume >= 1) clearInterval(fadeTimer);
+      }, interval);
     }
 
-    // Unmute toggle
     unmuteBtn.addEventListener('click', () => {
       isMuted = !isMuted;
       vid.muted = isMuted;
       unmuteBtn.textContent = isMuted ? '🔇 Unmute' : '🔊 Mute';
-      if (!isMuted && bgMusic) fadeInAudio(bgMusic);
+      if (!isMuted) fadeInAudio(bgMusic);
       else if (bgMusic) bgMusic.pause();
     });
 
     // HUD controls
-    const group = document.getElementById('contentGroup');
     document.getElementById('bigger').onclick = () => {
       const s = group.getAttribute('scale'); const f=1.08;
       group.setAttribute('scale', {x:s.x*f, y:s.y*f, z:s.z*f});
