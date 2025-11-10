@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PRHS • Solomon Cottage AR Demo</title>
+
+  <!-- A-Frame + AR.js -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    html, body { margin:0; height:100%; background:#0f2446; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    .hud {
+      position: fixed; left: 0; right: 0; bottom: 12px;
+      display:flex; gap:10px; justify-content:center; z-index: 3;
+    }
+    .btn {
+      background:#ffffff; border-radius:999px; padding:10px 14px; font-weight:600; border:none;
+      box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer;
+    }
+    .donate-wrap {
+      position: fixed; right: 12px; top: 12px; z-index: 3; text-align:center;
+    }
+    .donate-wrap a { text-decoration:none; display:inline-block; }
+    .donate-wrap img { width:110px; height:auto; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.28); }
+    .hint {
+      position: fixed; left:0; right:0; top: 10px; text-align:center; color:#fff; z-index:2; font-weight:600;
+      text-shadow:0 1px 2px rgba(0,0,0,.5);
+    }
+    #unmute {
+      position: fixed; left: 12px; top: 12px; z-index: 3;
+      background:#ffffff; color:#0f2446; border:none; border-radius:999px;
+      font-weight:600; padding:10px 14px; box-shadow:0 4px 14px rgba(0,0,0,.18);
+      cursor:pointer;
+    }
+    video { display:none; }
+  </style>
+</head>
+
+<body>
+  <!-- DONATE overlay -->
+  <div class="donate-wrap">
+    <a href="#" target="_blank" rel="noopener">
+      <img src="assets/donate.png" alt="Donate to Park Ridge Historical Society">
+    </a>
+  </div>
+
+  <!-- UNMUTE button -->
+  <button id="unmute">🔇 Unmute</button>
+
+  <!-- Instructions -->
+  <div class="hint">Point your camera at the printed “Hiro” marker to reveal content.</div>
+
+  <!-- HUD controls -->
+  <div class="hud">
+    <button class="btn" id="bigger">Scale +</button>
+    <button class="btn" id="smaller">Scale –</button>
+    <button class="btn" id="rotate">Rotate 15°</button>
+  </div>
+
+  <!-- Sponsor Video -->
+  <video id="sponsorVid" src="assets/sponsor.mp4" autoplay muted playsinline loop></video>
+
+  <!-- Background Audio -->
+  <audio id="bgMusic" src="assets/background.mp3" loop preload="auto"></audio>
+
+  <!-- AR.js Scene -->
+  <a-scene
+    vr-mode-ui="enabled:false"
+    embedded
+    renderer="antialias:true; alpha:true"
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled:false;">
+    
+    <a-entity light="type: ambient; intensity: 1"></a-entity>
+
+    <a-marker id="rootMarker" preset="hiro">
+      <a-entity id="contentGroup" position="0 0 0" rotation="0 0 0" scale="1 1 1">
+
+        <!-- Historic Photo -->
+        <a-plane position="-0.65 0.35 0"
+                 width="1.1" height="0.85"
+                 material="src: url(assets/solomon.jpg); side:double;"></a-plane>
+
+        <!-- Sponsor Video -->
+        <a-video src="#sponsorVid"
+                 position="0.65 0.35 0"
+                 width="1.1" height="0.62"
+                 autoplay="true" loop="true" muted="true" webkit-playsinline playsinline>
+        </a-video>
+
+        <!-- Label -->
+        <a-plane position="0 -0.15 0"
+                 width="2.3" height="0.25"
+                 color="#ffffff" opacity="0.9">
+          <a-entity
+             text="value: Park Ridge Historical Society • Solomon Cottage; color:#0f2446; align:center; width: 3.8;"
+             position="0 0 0.01"></a-entity>
+        </a-plane>
+
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const vid = document.getElementById('sponsorVid');
+    const unmuteBtn = document.getElementById('unmute');
+    const bgMusic = document.getElementById('bgMusic');
+    let isMuted = true;
+    let fadeTimer;
+
+    // Mobile autoplay handling
+    const kickVideo = () => {
+      vid.play().catch(()=>{});
+      window.removeEventListener('touchstart', kickVideo);
+      window.removeEventListener('click', kickVideo);
+    };
+    window.addEventListener('touchstart', kickVideo, {once:true});
+    window.addEventListener('click', kickVideo, {once:true});
+
+    // Smooth fade-in for background audio
+    function fadeInAudio(audioEl, duration = 3000) {
+      audioEl.volume = 0;
+      audioEl.play().catch(()=>{});
+      clearInterval(fadeTimer);
+      const step = 0.05;
+      fadeTimer = setInterval(() => {
+        if (audioEl.volume < 1.0) {
+          audioEl.volume = Math.min(1, audioEl.volume + step);
+        } else {
+          clearInterval(fadeTimer);
+        }
+      }, duration * step);
+    }
+
+    // Unmute toggle
+    unmuteBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      vid.muted = isMuted;
+      unmuteBtn.textContent = isMuted ? '🔇 Unmute' : '🔊 Mute';
+      if (!isMuted) {
+        fadeInAudio(bgMusic);
+      } else {
+        bgMusic.pause();
+      }
+    });
+
+    // HUD controls
+    const group = document.getElementById('contentGroup');
+    document.getElementById('bigger').onclick = () => {
+      const s = group.getAttribute('scale'); const f=1.08; group.setAttribute('scale', {x:s.x*f, y:s.y*f, z:s.z*f});
+    };
+    document.getElementById('smaller').onclick = () => {
+      const s = group.getAttribute('scale'); const f=0.92; group.setAttribute('scale', {x:s.x*f, y:s.y*f, z:s.z*f});
+    };
+    document.getElementById('rotate').onclick = () => {
+      const r = group.getAttribute('rotation'); group.setAttribute('rotation', {x:r.x, y:r.y+15, z:r.z});
+    };
+  </script>
+</body>
+</html>
