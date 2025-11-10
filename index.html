@@ -11,13 +11,24 @@
 
   <style>
     html, body { margin:0; height:100%; background:#0f2446; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    .hud { position: fixed; left: 0; right: 0; bottom: 12px; display:flex; gap:10px; justify-content:center; z-index: 3; }
-    .btn { background:#ffffff; border-radius:999px; padding:10px 14px; font-weight:600; border:none; box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer; }
-    .donate-wrap { position: fixed; right: 12px; top: 12px; z-index: 3; text-align:center; }
-    .donate-wrap a { text-decoration:none; display:inline-block; }
+    /* overlays */
+    .donate-wrap { position: fixed; right: 12px; top: 12px; z-index: 4; text-align:center; }
     .donate-wrap img { width:110px; height:auto; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.28); }
-    #unmute { position: fixed; left: 12px; top: 12px; z-index: 3; background:#ffffff; color:#0f2446; border:none; border-radius:999px; font-weight:600; padding:10px 14px; box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer; }
-    video { display:none; } /* A-Frame uses it as a texture */
+    .controls { position: fixed; left: 12px; top: 12px; z-index: 4; display: flex; gap: 8px; }
+    .btn {
+      background:#ffffff; border-radius:999px; padding:10px 14px; font-weight:600; border:none;
+      box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer;
+    }
+    .hud { position: fixed; left: 0; right: 0; bottom: 12px; display:flex; gap:10px; justify-content:center; z-index: 3; }
+    #unmute {
+      position: fixed; left: 12px; bottom: 12px; z-index: 4;
+      background:#ffffff; color:#0f2446; border:none; border-radius:999px;
+      font-weight:600; padding:10px 14px; box-shadow:0 4px 14px rgba(0,0,0,.18); cursor:pointer;
+    }
+    .hint {
+      position: fixed; left:0; right:0; top: 10px; text-align:center; color:#fff; z-index:2; font-weight:600;
+      text-shadow:0 1px 2px rgba(0,0,0,.5); opacity:1; transition: opacity .6s ease;
+    }
     /* Start overlay */
     .gate {
       position: fixed; inset: 0; background: radial-gradient(120% 120% at 50% 40%, #1b3a7a 0%, #0f2446 60%, #0b1630 100%);
@@ -29,7 +40,7 @@
       margin-top:8px; background:#ffffff; color:#0f2446; border:none; padding:12px 18px; border-radius:999px; font-weight:700; cursor:pointer;
       box-shadow:0 8px 24px rgba(0,0,0,.25);
     }
-    .hint { position: fixed; left:0; right:0; top: 10px; text-align:center; color:#fff; z-index:2; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+    video { display:none; } /* hidden; used as texture */
   </style>
 </head>
 
@@ -42,11 +53,16 @@
     </a>
   </div>
 
-  <!-- UNMUTE button -->
+  <!-- Top-left controls (Flip Camera) -->
+  <div class="controls">
+    <button class="btn" id="flipCam">Flip Camera</button>
+  </div>
+
+  <!-- UNMUTE bottom-left (auto-hides after unmuted) -->
   <button id="unmute">🔇 Unmute</button>
 
-  <!-- Instruction hint -->
-  <div class="hint">Allow camera access — your AR scene will appear automatically.</div>
+  <!-- Hint (auto-fade) -->
+  <div class="hint" id="hint">Allow camera access — your AR scene will appear automatically.</div>
 
   <!-- HUD controls -->
   <div class="hud">
@@ -55,7 +71,7 @@
     <button class="btn" id="rotate">Rotate 15°</button>
   </div>
 
-  <!-- Start overlay (forces a user gesture for camera + video) -->
+  <!-- Start overlay -->
   <div class="gate" id="gate">
     <h1>Solomon Cottage AR</h1>
     <p>Tap Start to enable your camera and begin the demo.</p>
@@ -64,7 +80,7 @@
 
   <!-- Media sources -->
   <video id="sponsorVid" src="assets/Solomon Cottage.mp4" autoplay muted playsinline loop></video>
-  <!-- Optional: if you didn’t upload this, remove the element below -->
+  <!-- Optional background music (remove if you didn’t upload it) -->
   <audio id="bgMusic" src="assets/background.mp3" loop preload="auto"></audio>
 
   <!-- Markerless scene -->
@@ -79,21 +95,17 @@
     <!-- Content 2m in front of the camera -->
     <a-entity id="contentGroup" position="0 0 -2" rotation="0 0 0" scale="1 1 1">
       <!-- Historic Photo -->
-      <a-plane position="-0.65 0.35 0"
-               width="1.1" height="0.85"
-               material="src: url(assets/Solomon-Cottage_-Very-Early-Image-300x230.jpg); side:double;">
-      </a-plane>
+      <a-plane position="-0.65 0.35 0" width="1.1" height="0.85"
+               material="src: url(assets/Solomon-Cottage_-Very-Early-Image-300x230.jpg); side:double;"></a-plane>
 
       <!-- Sponsor/Avatar Video -->
-      <a-video src="#sponsorVid"
-               position="0.65 0.35 0"
-               width="1.1" height="0.62"
-               autoplay="true" loop="true" muted="true" webkit-playsinline playsinline>
-      </a-video>
+      <a-video src="#sponsorVid" position="0.65 0.35 0" width="1.1" height="0.62"
+               autoplay="true" loop="true" muted="true" webkit-playsinline playsinline></a-video>
 
       <!-- Label -->
       <a-plane position="0 -0.15 0" width="2.3" height="0.25" color="#ffffff" opacity="0.9">
-        <a-entity text="value: Park Ridge Historical Society • Solomon Cottage; color:#0f2446; align:center; width: 3.8;" position="0 0 0.01"></a-entity>
+        <a-entity text="value: Park Ridge Historical Society • Solomon Cottage; color:#0f2446; align:center; width: 3.8;"
+                  position="0 0 0.01"></a-entity>
       </a-plane>
     </a-entity>
 
@@ -106,22 +118,23 @@
     const vid = document.getElementById('sponsorVid');
     const bgMusic = document.getElementById('bgMusic');
     const unmuteBtn = document.getElementById('unmute');
+    const flipBtn = document.getElementById('flipCam');
+    const hint = document.getElementById('hint');
     const group = document.getElementById('contentGroup');
     let isMuted = true, fadeTimer;
 
-    // Start AR on button tap: triggers camera permission and kicks video
+    // Start AR on button tap: triggers camera permission & video play
     startBtn.addEventListener('click', async () => {
       try {
-        // Kick video (required on mobile)
         await vid.play().catch(()=>{});
-        // Hide gate
+      } finally {
         gate.style.display = 'none';
-      } catch(e) {
-        console.warn('Video play was blocked:', e);
+        // fade the hint after a moment
+        setTimeout(()=> hint.style.opacity = 0, 2500);
       }
     });
 
-    // Unmute toggle + background music fade
+    // Unmute toggle + background music fade; auto-hide unmute after enabled
     function fadeInAudio(audioEl, duration = 3000) {
       if (!audioEl) return;
       audioEl.volume = 0;
@@ -133,13 +146,40 @@
         if (audioEl.volume >= 1) clearInterval(fadeTimer);
       }, interval);
     }
-
     unmuteBtn.addEventListener('click', () => {
       isMuted = !isMuted;
       vid.muted = isMuted;
       unmuteBtn.textContent = isMuted ? '🔇 Unmute' : '🔊 Mute';
-      if (!isMuted) fadeInAudio(bgMusic);
-      else if (bgMusic) bgMusic.pause();
+      if (!isMuted) {
+        fadeInAudio(bgMusic);
+        // Auto-hide button after unmuted (so it doesn't cover text)
+        setTimeout(()=> unmuteBtn.style.display = 'none', 2000);
+      } else {
+        unmuteBtn.style.display = 'block';
+        if (bgMusic) bgMusic.pause();
+      }
+    });
+
+    // Flip camera: uses AR.js arToolkitSource.switchCamera() if available
+    flipBtn.addEventListener('click', () => {
+      try {
+        const sceneEl = document.querySelector('a-scene');
+        const arjsSystem = sceneEl.systems && sceneEl.systems['arjs'];
+        const src = arjsSystem && arjsSystem.arToolkitSource;
+        if (src && typeof src.switchCamera === 'function') {
+          src.switchCamera(); // toggles user <-> environment
+        } else {
+          alert('Camera flip not supported on this device/browser.');
+        }
+      } catch (e) {
+        console.warn('Flip camera failed:', e);
+        alert('Unable to switch camera on this device/browser.');
+      }
+    });
+
+    // Extra resilience: resume video if page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) vid.play().catch(()=>{});
     });
 
     // HUD controls
